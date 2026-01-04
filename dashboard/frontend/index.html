@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Keuangan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-50 to-slate-100">
+    
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-slate-800 mb-2">💰 Dashboard Keuangan</h1>
+            <p class="text-slate-600">Pantau keuangan kamu dengan mudah</p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Pemasukan -->
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
+                <div class="flex items-center justify-between mb-4">
+                    <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                    <span class="text-sm font-medium text-slate-600" id="monthLabel">Bulan Ini</span>
+                </div>
+                <div class="text-3xl font-bold text-slate-800 mb-1" id="totalPemasukan">
+                    Loading...
+                </div>
+                <div class="text-green-600 text-sm font-medium">↑ Pemasukan</div>
+            </div>
+
+            <!-- Pengeluaran -->
+            <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
+                <div class="flex items-center justify-between mb-4">
+                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
+                    </svg>
+                    <span class="text-sm font-medium text-slate-600">Bulan Ini</span>
+                </div>
+                <div class="text-3xl font-bold text-slate-800 mb-1" id="totalPengeluaran">
+                    Loading...
+                </div>
+                <div class="text-red-600 text-sm font-medium">↓ Pengeluaran</div>
+            </div>
+
+            <!-- Saving -->
+            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white shadow-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <span class="text-sm font-medium bg-white bg-opacity-20 px-3 py-1 rounded-full">Saving</span>
+                </div>
+                <div class="text-3xl font-bold mb-1" id="totalSaving">
+                    Loading...
+                </div>
+                <div class="text-green-100 text-sm" id="savingPercent">0% dari pemasukan</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Trend Chart -->
+<div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
+    <h2 class="text-xl font-bold text-slate-800 mb-4">📈 Trend Pengeluaran (7 Hari)</h2>
+    <div class="h-64">  <!-- ← TAMBAH INI -->
+        <canvas id="trendChart"></canvas>
+    </div>
+</div>
+
+<!-- Category Chart -->
+<div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-200">
+    <h2 class="text-xl font-bold text-slate-800 mb-4">🥧 Pengeluaran per Kategori</h2>
+    <div class="h-64">  <!-- ← TAMBAH INI -->
+        <canvas id="categoryChart"></canvas>
+    </div>
+</div>
+
+<!-- Monthly Chart -->
+<div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 mb-8 lg:h-[520px] flex flex-col">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-slate-8">📊 Perbandingan Bulanan</h2>
+    </div>
+    <div class="h-80 flex-1">
+        <canvas id="monthlyChart"></canvas>
+    </div>
+</div>
+
+        <!-- Transactions Table -->
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-slate-200 flex flex-col lg:h-[520px]">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
+                <h2 class="text-xl font-bold text-slate-800">📋 Transaksi Terbaru</h2>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="loadAllData()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+                        🔄 Refresh
+                    </button>
+                    <button onclick="openExportModal()" class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition">
+                        ⬇️ Export PDF
+                    </button>
+                </div>
+            </div>
+
+            <div class="max-h-[520px] overflow-y-auto overflow-x-auto rounded-xl border border-slate-100">
+                <table class="w-full min-w-[480px] table-fixed">
+                    <colgroup>
+                        <col class="w-28">
+                        <col class="w-24">
+                        <col>
+                        <col class="w-32">
+                    </colgroup>
+                    <thead class="sticky top-0 bg-white z-10 shadow-sm">
+                        <tr class="border-b border-slate-200">
+                            <th class="text-left py-2.5 px-3 text-slate-600 font-semibold whitespace-nowrap">Tanggal</th>
+                            <th class="text-left py-2.5 px-3 text-slate-600 font-semibold whitespace-nowrap">Kategori</th>
+                            <th class="text-left py-2.5 px-3 text-slate-600 font-semibold">Keterangan</th>
+                            <th class="text-right py-2.5 px-3 text-slate-600 font-semibold whitespace-nowrap">Jumlah</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsTable" class="align-middle">
+                        <tr>
+                            <td colspan="4" class="text-center py-12 text-slate-500">
+                                Loading data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div class="mt-8 text-center">
+            <div id="status" class="text-slate-500 text-sm">
+                💡 Menghubungkan ke Backend API...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // KONFIGURASI - Ganti kalau port berbeda!
+        // ==========================================
+        const API_BASE_URL = 'http://localhost:8001';
+        
+        // ==========================================
+        // JANGAN UBAH CODE DI BAWAH INI
+        // ==========================================
+        
+        let trendChart, categoryChart, monthlyChart;
+        
+        async function loadAllData() {
+            document.getElementById('status').textContent = '🔄 Loading data...';
+            
+            try {
+                await Promise.all([
+                    loadSummary(),
+                    loadTransactions(),
+                    loadTrends(),
+                    loadCategories(),
+                    loadMonthlyComparison()
+                ]);
+                
+                document.getElementById('status').textContent = '✅ Data berhasil dimuat dari Backend API!';
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('status').textContent = '❌ Gagal memuat data. Pastikan backend API jalan di ' + API_BASE_URL;
+            }
+        }
+
+        // ============ EXPORT PDF ============
+        function openExportModal() {
+            const modal = document.getElementById('exportModal');
+            modal.classList.remove('hidden');
+        }
+
+        function closeExportModal() {
+            const modal = document.getElementById('exportModal');
+            modal.classList.add('hidden');
+        }
+
+        async function exportPdf() {
+            const preset = document.getElementById('exportPresetModal').value;
+            const start = document.getElementById('exportStartModal').value;
+            const end = document.getElementById('exportEndModal').value;
+            
+            if (preset === 'custom') {
+                if (!start || !end) {
+                    alert('Isi tanggal mulai dan akhir untuk export custom.');
+                    return;
+                }
+                if (new Date(start) > new Date(end)) {
+                    alert('Tanggal mulai tidak boleh lebih besar dari tanggal akhir.');
+                    return;
+                }
+            }
+            
+            const params = new URLSearchParams();
+            params.append('preset', preset);
+            if (preset === 'custom') {
+                params.append('start', start);
+                params.append('end', end);
+            }
+            
+            const url = `${API_BASE_URL}/api/export/pdf?${params.toString()}`;
+            document.getElementById('status').textContent = '⏳ Menyiapkan PDF...';
+            
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('Gagal mengunduh PDF');
+                const blob = await res.blob();
+                const downloadUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = 'transaksi.pdf';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(downloadUrl);
+                document.getElementById('status').textContent = '✅ PDF berhasil diunduh.';
+                closeExportModal();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('status').textContent = '❌ Gagal export PDF. Pastikan endpoint export tersedia.';
+                alert('Export PDF gagal. Pastikan backend menyediakan endpoint /api/export/pdf.');
+            }
+        }
+        
+        async function loadSummary() {
+            const response = await fetch(`${API_BASE_URL}/api/summary`);
+            const data = await response.json();
+            
+            document.getElementById('monthLabel').textContent = data.month;
+            document.getElementById('totalPemasukan').textContent = `Rp ${data.pemasukan.toLocaleString('id-ID')}`;
+            document.getElementById('totalPengeluaran').textContent = `Rp ${data.pengeluaran.toLocaleString('id-ID')}`;
+            document.getElementById('totalSaving').textContent = `Rp ${data.saving.toLocaleString('id-ID')}`;
+            document.getElementById('savingPercent').textContent = `${data.saving_percent}% dari pemasukan`;
+        }
+        
+        async function loadTransactions() {
+            const response = await fetch(`${API_BASE_URL}/api/transactions?limit=20`);
+            const data = await response.json();
+            
+            const tbody = document.getElementById('transactionsTable');
+            tbody.innerHTML = data.transactions.map(t => `
+                <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td class="py-3 px-3 text-sm text-slate-700 align-middle">
+                        <div class="leading-tight">
+                            <div class="font-semibold">${t.tanggal}</div>
+                            <div class="text-xs text-slate-400">${t.waktu}</div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-3 align-middle">
+                        <span class="inline-block px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 whitespace-nowrap">
+                            ${t.kategori}
+                        </span>
+                    </td>
+                    <td class="py-3 px-3 text-sm text-slate-700 align-middle">${t.keterangan}</td>
+                    <td class="py-3 px-3 text-right font-semibold ${t.jumlah < 0 ? 'text-red-600' : 'text-green-600'} align-middle whitespace-nowrap">
+                        ${t.jumlah < 0 ? '-' : '+'} Rp ${Math.abs(t.jumlah).toLocaleString('id-ID')}
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        async function loadTrends() {
+            const response = await fetch(`${API_BASE_URL}/api/trends?days=7`);
+            const data = await response.json();
+            
+            if (trendChart) trendChart.destroy();
+            
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            trendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.trends.map(t => t.date),
+                    datasets: [{
+                        label: 'Pengeluaran',
+                        data: data.trends.map(t => t.amount),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'Rp ' + value.toLocaleString('id-ID');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        async function loadCategories() {
+            const response = await fetch(`${API_BASE_URL}/api/categories`);
+            const data = await response.json();
+            
+            if (categoryChart) categoryChart.destroy();
+            
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            const colors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'];
+            
+            categoryChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.categories.map(c => c.name),
+                    datasets: [{
+                        data: data.categories.map(c => c.value),
+                        backgroundColor: colors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': Rp ' + context.parsed.toLocaleString('id-ID');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        async function loadMonthlyComparison() {
+            const response = await fetch(`${API_BASE_URL}/api/monthly-comparison?months=3`);
+            const data = await response.json();
+            
+            if (monthlyChart) monthlyChart.destroy();
+            
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            
+            monthlyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.comparison.map(m => m.month),
+                    datasets: [
+                        {
+                            label: 'Pemasukan',
+                            data: data.comparison.map(m => m.pemasukan),
+                            backgroundColor: '#10b981'
+                        },
+                        {
+                            label: 'Pengeluaran',
+                            data: data.comparison.map(m => m.pengeluaran),
+                            backgroundColor: '#ef4444'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'Rp ' + value.toLocaleString('id-ID');
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': Rp ' + context.parsed.y.toLocaleString('id-ID');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Load data on page load
+        loadAllData();
+        
+        // Auto refresh every 30 seconds
+        setInterval(loadAllData, 30000);
+    </script>
+
+    <div class="fixed bottom-3 right-3 text-xs text-slate-400 font-semibold pointer-events-none select-none">
+        Created by Diva
+    </div>
+
+</body>
+
+<!-- Export Modal -->
+<div id="exportModal" class="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md mx-4">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-slate-800">Export PDF</h3>
+            <button onclick="closeExportModal()" class="text-slate-400 hover:text-slate-600">✕</button>
+        </div>
+
+        <div class="space-y-3">
+            <label class="block text-sm text-slate-600">Pilih rentang</label>
+            <select id="exportPresetModal" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring focus:ring-blue-100">
+                <option value="this_month">Bulan ini</option>
+                <option value="last_month">Bulan lalu</option>
+                <option value="custom">Custom</option>
+                <option value="all">Semua data</option>
+            </select>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Mulai</label>
+                    <input id="exportStartModal" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring focus:ring-blue-100" />
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Selesai</label>
+                    <input id="exportEndModal" type="date" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring focus:ring-blue-100" />
+                </div>
+            </div>
+            <p class="text-xs text-slate-500">Untuk preset custom, isi kedua tanggal. Untuk "Semua data", biarkan tanggal kosong.</p>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-2">
+            <button onclick="closeExportModal()" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">Batal</button>
+            <button onclick="exportPdf()" class="px-4 py-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600">Export</button>
+        </div>
+    </div>
+</div>
+</html>

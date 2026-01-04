@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# IDEs/Editors
+.vscode/
+.idea/
+
+# Credentials & sensitive files
+credentials.json
+.env
+
+# Temporary files
+temp_receipt_*.jpg
+*.pdf
