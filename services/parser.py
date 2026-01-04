@@ -5,14 +5,11 @@ from models.transaction import Transaction
 from config.settings import Config
 
 class MessageParser:
-    """Parser untuk mengekstrak informasi dari pesan natural language"""
+    """Parser untuk mengekstrak informasi dari pesan."""
     
     @staticmethod
     def extract_amount(text: str) -> Optional[float]:
-        """
-        Extract jumlah uang dari text
-        Support format: 15000, 15rb, 15k, 1.5jt, 1,5jt, 5000000
-        """
+        """Ambil nominal uang (format: 15000, 15rb/k, 1.5jt, 1,5jt)."""
         text = text.lower().replace(',', '.')
         
         # Pattern untuk jutaan (1.5jt, 2jt, 1.5juta, 5jt)
@@ -35,10 +32,7 @@ class MessageParser:
     
     @staticmethod
     def detect_category(text: str) -> Tuple[str, str]:
-        """
-        Detect kategori dan tipe transaksi dari text
-        Returns: (transaction_type, category)
-        """
+        """Deteksi tipe transaksi dan kategori."""
         text = text.lower()
         
         # Check income keywords dulu
@@ -57,10 +51,7 @@ class MessageParser:
     
     @staticmethod
     def clean_description(text: str, amount: float) -> str:
-        """
-        Bersihkan text untuk jadi deskripsi
-        Hapus angka dan satuan uang dari text
-        """
+        """Bersihkan teks keterangan dari angka/satuan."""
         # Hapus pattern angka dengan satuan
         text = re.sub(r'\d+\.?\d*\s*(?:jt|juta|k|rb|ribu)', '', text, flags=re.IGNORECASE)
         # Hapus angka biasa
@@ -72,14 +63,7 @@ class MessageParser:
     
     @staticmethod
     def parse_message(text: str) -> Optional[Transaction]:
-        """
-        Parse natural language message menjadi Transaction object
-        
-        Contoh input:
-        - "makan siang 25000" → Transaction(25000, expense, Makan, "makan siang")
-        - "gaji 5jt" → Transaction(5000000, income, Pemasukan, "gaji")
-        - "beliin nisa seblak 5000" → Transaction(5000, expense, Makan, "beliin nisa seblak")
-        """
+        """Parse pesan menjadi objek Transaction."""
         # Extract amount
         amount = MessageParser.extract_amount(text)
         

@@ -1,4 +1,4 @@
-"""Constants for the application"""
+"""Konstanta aplikasi."""
 
 # Cache Settings
 CACHE_TIMEOUT_SECONDS = 60

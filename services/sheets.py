@@ -8,7 +8,7 @@ from config.settings import Config
 logger = logging.getLogger(__name__)
 
 class GoogleSheetsManager:
-    """Manager untuk handle Google Sheets operations"""
+    """Pengelola operasi Google Sheets."""
     
     def __init__(self):
         self.client = None
@@ -17,9 +17,8 @@ class GoogleSheetsManager:
         self._connect()
     
     def _connect(self):
-        """Koneksi ke Google Sheets"""
+        """Bangun koneksi ke Google Sheets."""
         try:
-            # Setup credentials
             scope = [
                 'https://spreadsheets.google.com/feeds',
                 'https://www.googleapis.com/auth/drive'
@@ -34,9 +33,7 @@ class GoogleSheetsManager:
             
             # Buka spreadsheet by ID
             spreadsheet = self.client.open_by_key(Config.SPREADSHEET_ID)
-            self.sheet = spreadsheet.sheet1  # Ambil sheet pertama
-            
-            # Setup header kalau belum ada
+            self.sheet = spreadsheet.sheet1
             self._setup_header()
             
             self.connected = True
@@ -51,17 +48,13 @@ class GoogleSheetsManager:
             self.connected = False
     
     def _setup_header(self):
-        """Setup header di baris pertama kalau belum ada"""
+        """Buat header di baris pertama bila belum tersedia."""
         try:
-            # Cek apakah baris pertama sudah ada isi
             first_row = self.sheet.row_values(1)
             
             if not first_row or first_row[0] != 'Tanggal':
-                # Kalau belum ada header, bikin header
                 headers = ['Tanggal', 'Waktu', 'Tipe', 'Kategori', 'Jumlah', 'Keterangan', 'Saldo']
                 self.sheet.update('A1:G1', [headers])
-                
-                # Format header (bold)
                 self.sheet.format('A1:G1', {
                     'textFormat': {'bold': True},
                     'backgroundColor': {'red': 0.9, 'green': 0.9, 'blue': 0.9}
@@ -72,19 +65,14 @@ class GoogleSheetsManager:
             logger.warning(f"Tidak bisa setup header: {e}")
     
     def add_transaction(self, transaction: Transaction) -> bool:
-        """
-        Tambah transaksi ke Google Sheets
-        Returns True jika berhasil, False jika gagal
-        """
+        """Tambah transaksi ke Google Sheets, True jika berhasil."""
         if not self.connected:
             logger.error("❌ Tidak terhubung ke Google Sheets")
             return False
         
         try:
-            # Get data dari transaction
             data = transaction.to_dict()
             
-            # Hitung saldo (ambil saldo terakhir + transaksi baru)
             current_balance = self._get_current_balance()
             
             if transaction.transaction_type == 'income':
@@ -92,10 +80,8 @@ class GoogleSheetsManager:
             else:
                 new_balance = current_balance - transaction.amount
             
-            # Format angka untuk display
             amount_display = transaction.amount if transaction.transaction_type == 'income' else -transaction.amount
             
-            # Prepare row data
             row = [
                 data['date'],
                 data['time'],
@@ -107,7 +93,6 @@ class GoogleSheetsManager:
                 new_balance
             ]
             
-            # Append ke sheet
             self.sheet.append_row(row)
             
             logger.info(f"✅ Transaksi berhasil ditambahkan: Rp {transaction.amount:,.0f} | Saldo: Rp {new_balance:,.0f}")
@@ -119,17 +104,11 @@ class GoogleSheetsManager:
             return False
     
     def _get_current_balance(self) -> float:
-        """Get saldo terakhir dari kolom Saldo"""
+        """Ambil saldo terakhir dari kolom saldo."""
         try:
-            # Ambil semua nilai di kolom G (Saldo)
-            saldo_col = self.sheet.col_values(8)  # Kolom G = kolom ke-7
-            
-            # Kalau ada data (lebih dari header)
+            saldo_col = self.sheet.col_values(8)
             if len(saldo_col) > 1:
-                # Ambil saldo terakhir (skip header di index 0)
                 last_balance = saldo_col[-1]
-                
-                # Convert ke float (handle format angka)
                 try:
                     return float(str(last_balance).replace(',', ''))
                 except:
@@ -142,8 +121,7 @@ class GoogleSheetsManager:
             return 0.0
     
     def get_today_summary(self) -> dict:
-        """Get ringkasan transaksi hari ini"""
-        # TODO: Implementasi kalau mau fitur summary
+        """Ringkasan transaksi harian (belum diimplementasikan)."""
         pass
     
     def get_balance(self) -> float:

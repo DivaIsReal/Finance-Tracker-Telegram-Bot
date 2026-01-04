@@ -14,7 +14,7 @@ class Transaction:
     detail: Optional[str] = None  # Detail items dari struk
     
     def to_dict(self):
-        """Convert ke dictionary untuk simpan ke database/sheets"""
+        """Ubah menjadi dict untuk penyimpanan."""
         return {
             'date': self.date.strftime('%d/%m/%Y'),
             'time': self.date.strftime('%H:%M:%S'),
@@ -27,7 +27,7 @@ class Transaction:
         }
     
     def format_message(self):
-        """Format pesan untuk dikirim ke user"""
+        """Format pesan konfirmasi ke pengguna."""
         emoji = '💰' if self.transaction_type == 'income' else '💸'
         type_text = 'PEMASUKAN' if self.transaction_type == 'income' else 'PENGELUARAN'
         sign = '+' if self.transaction_type == 'income' else '-'
