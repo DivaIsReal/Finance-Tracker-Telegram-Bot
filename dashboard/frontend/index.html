@@ -144,9 +144,9 @@
 
     <script>
         // ==========================================
-        // KONFIGURASI - Ganti kalau port berbeda!
+        // KONFIGURASI - gunakan origin saat ini agar aman (HTTPS/no mixed content)
         // ==========================================
-        const API_BASE_URL = 'http://localhost:8001';
+        const API_BASE_URL = window.location.origin;
         
         // ==========================================
         // JANGAN UBAH CODE DI BAWAH INI
