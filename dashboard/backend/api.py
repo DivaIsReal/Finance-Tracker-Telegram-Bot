@@ -1,7 +1,8 @@
 import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime, timedelta, date
@@ -11,6 +12,7 @@ from dotenv import load_dotenv
 import time
 from io import BytesIO
 from fpdf import FPDF
+from pathlib import Path
 
 # Load environment from root
 load_dotenv('../../.env')
@@ -23,6 +25,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Finance Dashboard API", version="1.0")
+
+# Serve static files (HTML frontend)
+FRONTEND_DIR = os.path.join(os.path.dirname(__file__), '..', 'frontend')
+if os.path.exists(FRONTEND_DIR):
+    app.mount("/dashboard", StaticFiles(directory=FRONTEND_DIR, html=True), name="dashboard")
+    logger.info(f"✅ Dashboard frontend mounted at /dashboard from {FRONTEND_DIR}")
+else:
+    logger.warning(f"⚠️ Frontend directory not found: {FRONTEND_DIR}")
 
 # CORS - For production, specify exact origins
 ALLOWED_ORIGINS = os.getenv('CORS_ORIGINS', '*').split(',')
@@ -197,15 +207,17 @@ def build_pdf(records: List[Dict], period_label: str) -> BytesIO:
 
 @app.get("/")
 def root():
-    """Root endpoint"""
+    """Root endpoint - redirects to dashboard"""
     return {
         "message": "Finance Dashboard API",
         "version": "1.0",
+        "dashboard": "http://localhost:8001/dashboard",
         "endpoints": {
             "summary": "/api/summary",
             "transactions": "/api/transactions",
             "trends": "/api/trends",
-            "categories": "/api/categories"
+            "categories": "/api/categories",
+            "export_pdf": "/api/export/pdf"
         }
     }
 
