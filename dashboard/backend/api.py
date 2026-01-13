@@ -5,7 +5,10 @@ from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
+
+# Timezone Indonesia (WIB)
+WIB = timezone(timedelta(hours=7))
 from typing import List, Dict
 import os
 from dotenv import load_dotenv
@@ -158,7 +161,7 @@ def build_pdf(records: List[Dict], period_label: str) -> BytesIO:
     pdf.cell(0, 10, 'Laporan Transaksi', ln=1)
     pdf.set_font('Helvetica', '', 11)
     pdf.cell(0, 8, f'Periode: {period_label}', ln=1)
-    generated_at = datetime.now().strftime('%d/%m/%Y %H:%M')
+    generated_at = datetime.now(tz=WIB).strftime('%d/%m/%Y %H:%M')
     pdf.cell(0, 8, f'Digenerate: {generated_at}', ln=1)
     pdf.ln(2)
 
@@ -229,7 +232,7 @@ def get_summary():
         records = get_sheet_data()
         
         # Get current month
-        now = datetime.now()
+        now = datetime.now(tz=WIB)
         current_month = now.month
         current_year = now.year
         
@@ -269,6 +272,8 @@ def get_summary():
             "month": now.strftime("%B %Y")
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -282,15 +287,19 @@ def get_transactions(limit: int = 50):
         # Sort by date (newest first) and limit
         transactions = []
         for record in records:
-            transactions.append({
-                "tanggal": record.get('Tanggal', ''),
-                "waktu": record.get('Waktu', ''),
-                "tipe": record.get('Tipe', ''),
-                "kategori": record.get('Kategori', ''),
-                "jumlah": float(record.get('Jumlah', 0)),
-                "keterangan": record.get('Keterangan', ''),
-                "detail": record.get('Detail', '')
-            })
+            try:
+                transactions.append({
+                    "tanggal": record.get('Tanggal', ''),
+                    "waktu": record.get('Waktu', ''),
+                    "tipe": record.get('Tipe', ''),
+                    "kategori": record.get('Kategori', ''),
+                    "jumlah": float(record.get('Jumlah', 0)),
+                    "keterangan": record.get('Keterangan', ''),
+                    "detail": record.get('Detail', '')
+                })
+            except Exception as e:
+                logger.error(f"Error parsing record: {record}, error: {e}")
+                continue
         
         # Reverse to get newest first
         transactions = transactions[-limit:][::-1]
@@ -300,7 +309,10 @@ def get_transactions(limit: int = 50):
             "total": len(transactions)
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Error in get_transactions: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -314,7 +326,7 @@ def get_trends(days: int = 7):
         daily_data = {}
         
         for i in range(days):
-            date = datetime.now() - timedelta(days=i)
+            date = datetime.now(tz=WIB) - timedelta(days=i)
             date_str = date.strftime('%d/%m/%Y')
             daily_data[date_str] = {
                 "date": date.strftime('%d %b'),
@@ -341,6 +353,8 @@ def get_trends(days: int = 7):
             "period": f"Last {days} days"
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"❌ Error in trends: {type(e).__name__}: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
@@ -353,7 +367,7 @@ def get_categories():
         records = get_sheet_data()
         
         # Get current month
-        now = datetime.now()
+        now = datetime.now(tz=WIB)
         current_month = now.month
         current_year = now.year
         
@@ -399,6 +413,8 @@ def get_categories():
             "total": sum(c['value'] for c in category_list)
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -447,6 +463,8 @@ def get_monthly_comparison(months: int = 3):
             "period": f"Last {months} months"
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -505,7 +523,7 @@ def export_pdf(preset: str = 'this_month', start: str = None, end: str = None):
 @app.get("/health")
 def health_check():
     """Health check endpoint"""
-    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+    return {"status": "healthy", "timestamp": datetime.now(tz=WIB).isoformat()}
 
 
 if __name__ == "__main__":

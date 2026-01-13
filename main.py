@@ -8,6 +8,7 @@ from bot.handlers import (
     start_command,
     help_command,
     saldo_command,
+    add_past_command,
     handle_text_message,
     error_handler
 )
@@ -29,6 +30,7 @@ def main():
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("saldo", saldo_command))
+    app.add_handler(CommandHandler("add_past", add_past_command))
     
     app.add_handler(MessageHandler(
         filters.TEXT & ~filters.COMMAND, 

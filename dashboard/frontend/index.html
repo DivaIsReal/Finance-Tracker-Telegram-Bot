@@ -144,9 +144,15 @@
 
     <script>
         // ==========================================
-        // KONFIGURASI - gunakan origin saat ini agar aman (HTTPS/no mixed content)
+        // KONFIGURASI API
         // ==========================================
-        const API_BASE_URL = window.location.origin;
+        // Otomatis detect: jika buka via Live Server (port 5500), arahkan ke backend (8001)
+        // Jika buka via backend langsung, gunakan origin yang sama
+        const API_BASE_URL = window.location.port === '5500' 
+            ? 'http://127.0.0.1:8001' 
+            : window.location.origin;
+        
+        console.log('API_BASE_URL:', API_BASE_URL);
         
         // ==========================================
         // JANGAN UBAH CODE DI BAWAH INI

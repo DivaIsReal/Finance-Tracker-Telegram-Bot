@@ -2,12 +2,20 @@ import re
 import os
 from google.cloud import vision
 from typing import Optional, Dict
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+# Timezone Indonesia (WIB)
+WIB = timezone(timedelta(hours=7))
 
 class OCRProcessor:
     """Processor untuk OCR struk menggunakan Google Cloud Vision API"""
     
     def __init__(self):
+        # ⚠️  OCR SEDANG DINONAKTIFKAN - MENCARI API OCR YANG LEBIH BAIK
+        self.connected = False
+        print("⚠️  Google Cloud Vision API dinonaktifkan untuk sementara")
+        return
+        
         try:
             # Set credentials dari file yang sama dengan Google Sheets
             os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'credentials.json'
@@ -294,7 +302,7 @@ class OCRProcessor:
             'amount': amount,
             'merchant': merchant,
             'category': category,
-            'date': date or datetime.now(),
+            'date': date or datetime.now(tz=WIB),
             'detail': detail,
             'raw_text': text
         }
